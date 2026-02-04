@@ -1,6 +1,6 @@
-# atypica Research Skill for Claude Code
+# atypica Research Skill
 
-Access atypica.ai's AI-powered business research capabilities directly from Claude Code. This skill enables multi-agent research workflows including consumer insights, product R&D, market analysis, and automated report generation.
+Access atypica.ai's AI-powered business research capabilities through MCP protocol. This skill enables multi-agent research workflows including consumer insights, product R&D, market analysis, and automated report generation.
 
 ## Features
 
@@ -22,7 +22,7 @@ If you don't have an account, sign up at **https://atypica.ai**
 
 ### Step 2: Install MCP Server
 
-The skill requires the atypica MCP server to be configured in your Claude Code setup.
+The skill requires the atypica MCP server to be configured in your MCP client.
 
 **Using `mcp-remote` (recommended)**:
 
@@ -44,7 +44,7 @@ Add to your MCP client configuration:
 }
 ```
 
-**Restart Claude Code** to load the MCP server.
+**Restart your AI assistant** to load the MCP server.
 
 ### Step 3: Install Skill
 
@@ -150,7 +150,7 @@ Omit `kind` in `create` to enter **Plan Mode** where AI auto-determines research
 
 ## License
 
-This skill is maintained by [atypica.ai](https://atypica.ai) and provided as-is for use with Claude Code.
+This skill is maintained by [atypica.ai](https://atypica.ai) and provided as-is for use with MCP-compatible AI assistants.
 
 ---
 
