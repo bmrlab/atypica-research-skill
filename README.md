@@ -1,162 +1,78 @@
 # atypica Research Skill
 
-Access atypica.ai's AI-powered business research capabilities through MCP protocol. This skill enables multi-agent research workflows including consumer insights, product R&D, market analysis, and automated report generation.
+AI-powered business research capabilities through MCP protocol. Enables multi-agent research workflows for consumer insights, product R&D, market analysis, and automated report generation.
 
 ## Features
 
-- 🤖 **Multi-Agent Research**: Leverage Plan Mode, Study Agent, Fast Insight Agent, Product R&D Agent
-- 🗣️ **Interview Simulation**: Conduct 1-on-1 interviews and group discussions with AI personas
-- 📊 **Automated Artifacts**: Generate research reports and podcasts
-- 🔍 **Semantic Persona Search**: Find and interview relevant AI personas using vector similarity
-- 💬 **Interactive Prompts**: Handle dynamic user interactions during research
+- 🤖 Multi-agent research (Plan Mode, Study, Fast Insight, Product R&D)
+- 🗣️ Interview simulation with AI personas
+- 📊 Automated report and podcast generation
+- 🔍 Semantic persona search
+- 💬 Interactive research workflows
+
+## Prerequisites
+
+### Required
+
+- **atypica.ai account** - Sign up at https://atypica.ai
+- **API Key** - Get from https://atypica.ai/account/settings (format: `atypica_xxx`)
+- **MCP-compatible AI assistant** OR **bash/curl** for direct API access
+
+### Usage & Billing
+
+- Research operations consume atypica.ai token credits
+- Token usage tracked per user account
+- Check usage at https://atypica.ai/account/usage
 
 ## Installation
 
-**IMPORTANT**: This skill requires the atypica MCP server to be installed and configured.
+### Option 1: MCP Integration
 
-### Step 1: Check if MCP server is available
+Requires MCP-compatible AI assistant (e.g., Claude Desktop, Cline).
 
-First, verify if the atypica MCP server is already installed by checking if tools starting with `atypica_` are available in your AI assistant.
-
-If atypica tools are not available, proceed to installation.
-
-### Step 2: Get API key
-
-1. Visit **https://atypica.ai/account/settings**
-2. Create an API key (format: `atypica_xxx`)
-3. **Copy the key immediately** (it will only be shown once)
-
-If you don't have an atypica.ai account, sign up at **https://atypica.ai** first.
-
-### Step 3: Install MCP server
-
-Add the MCP server to your AI assistant's configuration. The exact method varies by tool:
-
-**Example command (syntax varies by MCP client)**:
-
-```bash
-# Generic example - adjust for your specific MCP client
-mcp add --transport http atypica-research https://atypica.ai/mcp/study \
-  --header "Authorization: Bearer YOUR_API_KEY_HERE"
-```
-
-**For MCP clients supporting JSON config**:
-
-If your client uses JSON configuration, you can use `mcp-remote` as a proxy:
-
+**Configuration**:
 ```json
 {
   "mcpServers": {
     "atypica-research": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://atypica.ai/mcp/study",
-        "--header",
-        "Authorization: Bearer YOUR_API_KEY_HERE"
-      ]
+      "transport": "http",
+      "url": "https://atypica.ai/mcp/study",
+      "headers": {
+        "Authorization": "Bearer atypica_xxx"
+      }
     }
   }
 }
 ```
 
-Refer to your AI assistant's documentation for the exact configuration location and syntax.
+See [SKILL.md](SKILL.md) for detailed setup instructions.
 
-### Step 4: Restart and verify
+### Option 2: Bash Script (No MCP required)
 
-1. **Restart your AI assistant** to load the new MCP server
-2. Verify tools are available: Check for tools starting with `atypica_`
-
-## Quick Start
-
-```typescript
-// 1. Create research session
-const result = await callTool("atypica_study_create", {
-  content: "Research young people's coffee preferences"
-});
-const userChatToken = result.structuredContent.token;
-
-// 2. Send message (triggers AI execution)
-await callTool("atypica_study_send_message", {
-  userChatToken,
-  message: {
-    role: "user",
-    lastPart: { type: "text", text: "Start research" }
-  }
-});
-
-// 3. Poll for completion
-let messages;
-do {
-  await wait(5000);
-  const result = await callTool("atypica_study_get_messages", {
-    userChatToken,
-    tail: 10  // Get last 10 parts for efficiency
-  });
-  messages = result.structuredContent;
-} while (messages.isRunning);
-
-// 4. Get final report
-const reportTool = messages.messages
-  .flatMap(m => m.parts)
-  .find(p => p.type === "tool-generateReport" && p.output);
-
-if (reportTool?.output?.reportToken) {
-  const report = await callTool("atypica_study_get_report", {
-    token: reportTool.output.reportToken
-  });
-}
+```bash
+export ATYPICA_TOKEN="atypica_xxx"
+scripts/mcp-call.sh atypica_study_create '{"content":"Your research query"}'
 ```
 
 ## Documentation
 
-- **[SKILL.md](SKILL.md)** - Complete skill documentation and usage guide
-- **[API Reference](references/api-reference.md)** - Detailed API schemas and examples
+- **[SKILL.md](SKILL.md)** - Detailed usage guide for AI assistants
+- **[API Reference](references/api-reference.md)** - Complete API documentation
+- **[scripts/mcp-call.sh](scripts/mcp-call.sh)** - Bash fallback tool
 
 ## Available Tools
 
-### Session Management
-- `atypica_study_create` - Create research session
-- `atypica_study_send_message` - Send message and execute AI
-- `atypica_study_get_messages` - Get conversation history and status
-- `atypica_study_list` - List historical sessions
+**Research**: `atypica_study_create`, `atypica_study_send_message`, `atypica_study_get_messages`, `atypica_study_list`
 
-### Artifacts
-- `atypica_study_get_report` - Retrieve generated reports
-- `atypica_study_get_podcast` - Retrieve generated podcasts
+**Artifacts**: `atypica_study_get_report`, `atypica_study_get_podcast`
 
-### Personas
-- `atypica_persona_search` - Semantic search for AI personas
-- `atypica_persona_get` - Get persona details
+**Personas**: `atypica_persona_search`, `atypica_persona_get`
 
-## Research Types
+## Quick Links
 
-- `productRnD` - Product research & development
-- `fastInsight` - Quick insights with podcast generation
-- `insights` - Consumer insights research
-- `testing` - Product testing and validation
-- `creation` - Creative content generation
-- `planning` - Strategic planning
-- `misc` - Miscellaneous research
-
-Omit `kind` in `create` to enter **Plan Mode** where AI auto-determines research type.
-
-## Performance Expectations
-
-- Plan Mode: 5-10 seconds
-- Fast Insight: 20-40 seconds
-- Full Study/Product R&D: 30-120 seconds
-- Message/persona retrieval: < 2 seconds
-
-## Support
-
-- **Documentation**: https://atypica.ai/docs/mcp
-- **Issues**: https://github.com/bmrlab/atypica-research-skill/issues
-- **Website**: https://atypica.ai
-
-## License
-
-This skill is maintained by [atypica.ai](https://atypica.ai) and provided as-is for use with MCP-compatible AI assistants.
+- Website: https://atypica.ai
+- Documentation: https://atypica.ai/docs/mcp
+- Issues: https://github.com/bmrlab/atypica-research-skill/issues
 
 ---
 

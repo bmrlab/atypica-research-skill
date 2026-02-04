@@ -202,7 +202,7 @@ Retrieve conversation history from study session.
 ```json
 {
   "userChatToken": "abc123",
-  "tail": 10  // Get last 10 parts across all messages
+  "tail": 5  // Get last 3-5 parts (increase if more context needed)
 }
 ```
 

@@ -9,71 +9,40 @@ Access atypica.ai's multi-agent research framework for understanding consumer em
 
 ## Prerequisites
 
-**IMPORTANT**: This skill requires the atypica MCP server to be installed and configured.
+**IMPORTANT**: This skill provides two ways to access atypica.ai research capabilities:
 
-### Step 1: Check if MCP server is available
+### Option 1: MCP Server (Recommended for AI assistants)
 
-First, verify if the atypica MCP server is already installed by checking available tools:
+If tools starting with `atypica_` are already available, the MCP server is configured. Otherwise, guide the user to configure it.
 
-```typescript
-// Check for atypica tools
-const hasAtypica = /* check if tools starting with "atypica_" are available */;
-```
+**Configuration parameters**:
+- **Endpoint**: `https://atypica.ai/mcp/study`
+- **API Key**: From https://atypica.ai/account/settings (format: `atypica_xxx`)
+- **Authentication**: HTTP header `Authorization: Bearer <api_key>`
 
-If atypica tools are not available, proceed to installation.
-
-### Step 2: Guide user to get API key
-
-Instruct the user to:
-
-1. Visit **https://atypica.ai/account/settings**
-2. Create an API key (format: `atypica_xxx`)
-3. **Copy the key immediately** (it will only be shown once)
-
-If the user doesn't have an atypica.ai account, direct them to **https://atypica.ai** to sign up first.
-
-### Step 3: Install MCP server
-
-Add the MCP server to your AI assistant's configuration. The exact method varies by tool:
-
-**Example command (syntax varies by MCP client)**:
-
-```bash
-# Generic example - adjust for your specific MCP client
-mcp add --transport http atypica-research https://atypica.ai/mcp/study \
-  --header "Authorization: Bearer YOUR_API_KEY_HERE"
-```
-
-**For MCP clients supporting JSON config**:
-
-If your client uses JSON configuration, you can use `mcp-remote` as a proxy:
+**Example: Claude Desktop** - Edit config file at:
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "atypica-research": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://atypica.ai/mcp/study",
-        "--header",
-        "Authorization: Bearer YOUR_API_KEY_HERE"
-      ]
+      "transport": "http",
+      "url": "https://atypica.ai/mcp/study",
+      "headers": {
+        "Authorization": "Bearer atypica_xxx"
+      }
     }
   }
 }
 ```
 
-Refer to your AI assistant's documentation for the exact configuration location and syntax.
+Restart Claude Desktop to load. For other MCP clients, configuration syntax may differ.
 
-### Step 4: Restart and verify
+### Option 2: Direct Bash Script (Works anywhere)
 
-1. **Restart your AI assistant** to load the new MCP server
-2. Verify tools are available: Check for tools starting with `atypica_`
-
-## Fallback: Direct API Access
-
-If MCP server installation is not available, use the bundled bash script for direct HTTP API calls:
+If MCP server is not available or for simpler use cases, use the bundled bash script:
 
 ```bash
 scripts/mcp-call.sh <tool_name> <json_args> [options]
@@ -89,8 +58,8 @@ export ATYPICA_TOKEN="atypica_xxx"
 # Create research session
 scripts/mcp-call.sh atypica_study_create '{"content":"Research coffee preferences"}'
 
-# Get messages with tail parameter
-scripts/mcp-call.sh atypica_study_get_messages '{"userChatToken":"abc123","tail":10}'
+# Get messages with tail parameter (3-5 parts, increase if more context needed)
+scripts/mcp-call.sh atypica_study_get_messages '{"userChatToken":"abc123","tail":5}'
 ```
 
 **Options**:
@@ -124,12 +93,25 @@ await callTool("atypica_study_send_message", {
 
 // 3. Poll for research progress
 let result;
+let pollInterval = 30000; // 30 seconds before plan confirmation
+let tailSize = 3; // Start with 3-5 parts, increase if needed
 do {
-  await wait(5000);  // Wait 5 seconds
+  await wait(pollInterval);
   result = await callTool("atypica_study_get_messages", {
     userChatToken,
-    tail: 10  // Get last 10 parts for efficiency
+    tail: tailSize  // Get last few parts for efficiency
   });
+
+  // After plan confirmation, use longer interval
+  const hasPlanConfirmed = result.structuredContent.messages.some(m =>
+    m.parts.some(p => p.type === "tool-makeStudyPlan" && p.state === "output-available")
+  );
+  if (hasPlanConfirmed) {
+    pollInterval = 300000; // 5 minutes after plan confirmation
+  }
+
+  // If needed more context, increase tail size (up to 10-15)
+  // or remove tail parameter to get all messages
 } while (result.structuredContent.isRunning);
 
 // 4. Handle pending interactions or get final report
@@ -221,7 +203,9 @@ const { isRunning, messages } = result.structuredContent;
 
 if (isRunning) {
   // AI is working in background, cannot interact now
-  // Wait 5-10 seconds and poll again
+  // Polling strategy:
+  // - Before plan confirmation: 30 seconds
+  // - After plan confirmation: 5 minutes
   return "Research is running, please wait...";
 }
 ```
