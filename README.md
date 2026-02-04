@@ -1,0 +1,157 @@
+# atypica Research Skill for Claude Code
+
+Access atypica.ai's AI-powered business research capabilities directly from Claude Code. This skill enables multi-agent research workflows including consumer insights, product R&D, market analysis, and automated report generation.
+
+## Features
+
+- 🤖 **Multi-Agent Research**: Leverage Plan Mode, Study Agent, Fast Insight Agent, Product R&D Agent
+- 🗣️ **Interview Simulation**: Conduct 1-on-1 interviews and group discussions with AI personas
+- 📊 **Automated Artifacts**: Generate research reports and podcasts
+- 🔍 **Semantic Persona Search**: Find and interview relevant AI personas using vector similarity
+- 💬 **Interactive Prompts**: Handle dynamic user interactions during research
+
+## Prerequisites
+
+### Step 1: Get API Key
+
+1. Visit **https://atypica.ai/account/settings**
+2. Create an API key (format: `atypica_xxx`)
+3. **Copy immediately** (shown only once)
+
+If you don't have an account, sign up at **https://atypica.ai**
+
+### Step 2: Install MCP Server
+
+The skill requires the atypica MCP server to be configured in your Claude Code setup.
+
+**Using `mcp-remote` (recommended)**:
+
+Add to your MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "atypica-research": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://atypica.ai/mcp/study",
+        "--header",
+        "Authorization: Bearer YOUR_API_KEY_HERE"
+      ]
+    }
+  }
+}
+```
+
+**Restart Claude Code** to load the MCP server.
+
+### Step 3: Install Skill
+
+Download the skill file to your project:
+
+```bash
+# Create skills directory
+mkdir -p .claude/skills
+
+# Download skill
+curl -o .claude/skills/atypica-research.md \
+  https://raw.githubusercontent.com/bmrlab/atypica-research-skill/main/SKILL.md
+```
+
+Or copy `SKILL.md` directly to `.claude/skills/atypica-research.md` in your project.
+
+## Quick Start
+
+```typescript
+// 1. Create research session
+const result = await callTool("atypica_study_create", {
+  content: "Research young people's coffee preferences"
+});
+const userChatToken = result.structuredContent.token;
+
+// 2. Send message (triggers AI execution)
+await callTool("atypica_study_send_message", {
+  userChatToken,
+  message: {
+    role: "user",
+    lastPart: { type: "text", text: "Start research" }
+  }
+});
+
+// 3. Poll for completion
+let messages;
+do {
+  await wait(5000);
+  const result = await callTool("atypica_study_get_messages", {
+    userChatToken,
+    tail: 10  // Get last 10 parts for efficiency
+  });
+  messages = result.structuredContent;
+} while (messages.isRunning);
+
+// 4. Get final report
+const reportTool = messages.messages
+  .flatMap(m => m.parts)
+  .find(p => p.type === "tool-generateReport" && p.output);
+
+if (reportTool?.output?.reportToken) {
+  const report = await callTool("atypica_study_get_report", {
+    token: reportTool.output.reportToken
+  });
+}
+```
+
+## Documentation
+
+- **[SKILL.md](SKILL.md)** - Complete skill documentation and usage guide
+- **[API Reference](references/api-reference.md)** - Detailed API schemas and examples
+
+## Available Tools
+
+### Session Management
+- `atypica_study_create` - Create research session
+- `atypica_study_send_message` - Send message and execute AI
+- `atypica_study_get_messages` - Get conversation history and status
+- `atypica_study_list` - List historical sessions
+
+### Artifacts
+- `atypica_study_get_report` - Retrieve generated reports
+- `atypica_study_get_podcast` - Retrieve generated podcasts
+
+### Personas
+- `atypica_persona_search` - Semantic search for AI personas
+- `atypica_persona_get` - Get persona details
+
+## Research Types
+
+- `productRnD` - Product research & development
+- `fastInsight` - Quick insights with podcast generation
+- `insights` - Consumer insights research
+- `testing` - Product testing and validation
+- `creation` - Creative content generation
+- `planning` - Strategic planning
+- `misc` - Miscellaneous research
+
+Omit `kind` in `create` to enter **Plan Mode** where AI auto-determines research type.
+
+## Performance Expectations
+
+- Plan Mode: 5-10 seconds
+- Fast Insight: 20-40 seconds
+- Full Study/Product R&D: 30-120 seconds
+- Message/persona retrieval: < 2 seconds
+
+## Support
+
+- **Documentation**: https://atypica.ai/docs/mcp
+- **Issues**: https://github.com/bmrlab/atypica-research-skill/issues
+- **Website**: https://atypica.ai
+
+## License
+
+This skill is maintained by [atypica.ai](https://atypica.ai) and provided as-is for use with Claude Code.
+
+---
+
+**Auto-synced from [atypica-llm-app](https://github.com/bmrlab/atypica-llm-app)**
