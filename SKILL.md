@@ -71,6 +71,37 @@ Refer to your AI assistant's documentation for the exact configuration location 
 1. **Restart your AI assistant** to load the new MCP server
 2. Verify tools are available: Check for tools starting with `atypica_`
 
+## Fallback: Direct API Access
+
+If MCP server installation is not available, use the bundled bash script for direct HTTP API calls:
+
+```bash
+scripts/mcp-call.sh <tool_name> <json_args> [options]
+```
+
+**Setup**:
+```bash
+export ATYPICA_TOKEN="atypica_xxx"
+```
+
+**Examples**:
+```bash
+# Create research session
+scripts/mcp-call.sh atypica_study_create '{"content":"Research coffee preferences"}'
+
+# Get messages with tail parameter
+scripts/mcp-call.sh atypica_study_get_messages '{"userChatToken":"abc123","tail":10}'
+```
+
+**Options**:
+- `-t, --token` - API token (overrides ATYPICA_TOKEN)
+- `-o, --output` - Output format: text|json|structured|auto
+- `-f, --file` - Write output to file instead of stdout
+- `-v, --verbose` - Enable verbose output
+- `-h, --help` - Show help message
+
+See [scripts/mcp-call.sh](scripts/mcp-call.sh) for full documentation.
+
 ## Quick Start
 
 Once the MCP server is installed:
