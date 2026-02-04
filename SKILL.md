@@ -95,7 +95,10 @@ await callTool("atypica_study_send_message", {
 let result;
 do {
   await wait(5000);  // Wait 5 seconds
-  result = await callTool("atypica_study_get_messages", { userChatToken });
+  result = await callTool("atypica_study_get_messages", {
+    userChatToken,
+    tail: 10  // Get last 10 parts for efficiency
+  });
 } while (result.structuredContent.isRunning);
 
 // 4. Handle pending interactions or get final report

@@ -10,23 +10,39 @@ Access atypica.ai's AI-powered business research capabilities through MCP protoc
 - 🔍 **Semantic Persona Search**: Find and interview relevant AI personas using vector similarity
 - 💬 **Interactive Prompts**: Handle dynamic user interactions during research
 
-## Prerequisites
+## Installation
 
-### Step 1: Get API Key
+**IMPORTANT**: This skill requires the atypica MCP server to be installed and configured.
+
+### Step 1: Check if MCP server is available
+
+First, verify if the atypica MCP server is already installed by checking if tools starting with `atypica_` are available in your AI assistant.
+
+If atypica tools are not available, proceed to installation.
+
+### Step 2: Get API key
 
 1. Visit **https://atypica.ai/account/settings**
 2. Create an API key (format: `atypica_xxx`)
-3. **Copy immediately** (shown only once)
+3. **Copy the key immediately** (it will only be shown once)
 
-If you don't have an account, sign up at **https://atypica.ai**
+If you don't have an atypica.ai account, sign up at **https://atypica.ai** first.
 
-### Step 2: Install MCP Server
+### Step 3: Install MCP server
 
-The skill requires the atypica MCP server to be configured in your MCP client.
+Add the MCP server to your AI assistant's configuration. The exact method varies by tool:
 
-**Using `mcp-remote` (recommended)**:
+**Example command (syntax varies by MCP client)**:
 
-Add to your MCP client configuration:
+```bash
+# Generic example - adjust for your specific MCP client
+mcp add --transport http atypica-research https://atypica.ai/mcp/study \
+  --header "Authorization: Bearer YOUR_API_KEY_HERE"
+```
+
+**For MCP clients supporting JSON config**:
+
+If your client uses JSON configuration, you can use `mcp-remote` as a proxy:
 
 ```json
 {
@@ -44,22 +60,12 @@ Add to your MCP client configuration:
 }
 ```
 
-**Restart your AI assistant** to load the MCP server.
+Refer to your AI assistant's documentation for the exact configuration location and syntax.
 
-### Step 3: Install Skill
+### Step 4: Restart and verify
 
-Download the skill file to your project:
-
-```bash
-# Create skills directory
-mkdir -p .claude/skills
-
-# Download skill
-curl -o .claude/skills/atypica-research.md \
-  https://raw.githubusercontent.com/bmrlab/atypica-research-skill/main/SKILL.md
-```
-
-Or copy `SKILL.md` directly to `.claude/skills/atypica-research.md` in your project.
+1. **Restart your AI assistant** to load the new MCP server
+2. Verify tools are available: Check for tools starting with `atypica_`
 
 ## Quick Start
 
