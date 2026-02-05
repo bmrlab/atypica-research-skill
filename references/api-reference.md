@@ -687,13 +687,12 @@ try {
    ]);
    ```
 
-2. **Incremental Message Loading**: Use `afterMessageId` for pagination
+2. **Use Tail Parameter for Recent Context**: Use `tail` to limit parts returned
    ```typescript
-   const lastMessageId = getLastLoadedMessageId();
-   const newMessages = await mcp.callTool("atypica_study_get_messages", {
+   // Get last 5 parts for quick context
+   const recentMessages = await mcp.callTool("atypica_study_get_messages", {
      userChatToken,
-     afterMessageId: lastMessageId,
-     limit: 20
+     tail: 5  // Start with 3-5, increase if more context needed
    });
    ```
 

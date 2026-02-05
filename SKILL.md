@@ -124,6 +124,10 @@ if (reportTool?.output?.reportToken) {
   const report = await callTool("atypica_study_get_report", {
     token: reportTool.output.reportToken
   });
+  // Access report details
+  console.log(report.structuredContent.title);
+  console.log(report.structuredContent.shareUrl);  // Public share URL
+  console.log(report.structuredContent.content);   // HTML content
 } else {
   // If stopped without report, you can continue:
   await callTool("atypica_study_send_message", {
@@ -151,46 +155,170 @@ if (reportTool?.output?.reportToken) {
 
 **atypica_study_create** - Create research session
 - Input: `{ content: string }`
-- Returns: `{ token, studyId, status }`
+- Returns:
+  ```typescript
+  {
+    token: string;          // Study session token for subsequent operations
+    studyId: number;        // Internal study ID
+    status: "created";      // Always "created" on success
+  }
+  ```
 
 **atypica_study_send_message** - Send message and execute AI (10-120s)
 - Two input types:
   - User text: `{ userChatToken, message: { role: "user", lastPart: { type: "text", text } } }`
   - Tool result: See "User Interactions" section
-- Returns: `{ messageId, role, status, attachmentCount }`
+- Returns:
+  ```typescript
+  {
+    messageId: string;           // Message identifier
+    role: "user" | "assistant";  // Message role
+    status: "completed" | "saved_no_ai" | "ai_failed";
+    attachmentCount?: number;    // Number of attachments (if any)
+    error?: string;              // Error message (if status is "ai_failed")
+    reason?: string;             // Reason (if status is "saved_no_ai")
+  }
+  ```
 
 **atypica_study_get_messages** - Retrieve conversation history and execution status
-- Input: `{ userChatToken, tail? }`
-- Returns: `{ isRunning, messages: [{ messageId, role, parts, createdAt }] }`
+- Input: `{ userChatToken: string, tail?: number }`
+- Returns:
+  ```typescript
+  {
+    isRunning: boolean;  // true = AI executing, false = can interact
+    messages: Array<{
+      messageId: string;
+      role: "user" | "assistant";
+      parts: Array<MessagePart>;  // Text, tool calls, tool results
+      createdAt: string;           // ISO timestamp
+    }>;
+  }
+  ```
 - **Critical**:
   - `isRunning: true` → AI is executing, wait and poll again later
   - `isRunning: false` → Can interact, check for pending tool calls in `parts`
-  - `tail` (optional): Limit to last N parts across all messages
+  - `tail` (optional): Limit to last N parts across all messages (3-5 recommended)
 
 **atypica_study_list** - List historical research sessions
-- Input: `{ kind?, page?, pageSize? }`
-- Returns: `{ data: [...], pagination }`
+- Input:
+  ```typescript
+  {
+    kind?: "testing" | "insights" | "creation" | "planning" | "misc" | "productRnD" | "fastInsight";
+    page?: number;      // Default: 1
+    pageSize?: number;  // Default: 20, max: 100
+  }
+  ```
+- Returns:
+  ```typescript
+  {
+    data: Array<{
+      studyId: number;
+      token: string;           // Study session token
+      title: string;           // Auto-generated title
+      kind: string | null;     // Research type
+      topic: string;           // Research topic
+      hasReport: boolean;      // Has generated report
+      hasPodcast: boolean;     // Has generated podcast
+      replayUrl: string;       // URL to replay the study: https://atypica.ai/study/{token}/share?replay=1
+      createdAt: string;       // ISO timestamp
+      updatedAt: string;       // ISO timestamp
+    }>;
+    pagination: {
+      page: number;
+      pageSize: number;
+      totalCount: number;
+      totalPages: number;
+    };
+  }
+  ```
 
 ### Artifacts
 
 **atypica_study_get_report** - Get research report
-- Input: `{ token }`
-- Returns: `{ title, description, content (HTML), coverUrl, ... }`
+- Input: `{ token: string }`
+- Returns:
+  ```typescript
+  {
+    token: string;          // Report token
+    instruction: string;    // Generation instruction
+    title: string;          // Report title
+    description: string;    // Report description
+    content: string;        // HTML content (one-page format)
+    coverUrl?: string;      // Signed CDN URL for cover image
+    shareUrl: string;       // Public share URL: https://atypica.ai/artifacts/report/{token}/share
+    generatedAt: string;    // ISO timestamp when generated
+    createdAt: string;      // ISO timestamp when created
+    updatedAt: string;      // ISO timestamp when last updated
+  }
+  ```
 
 **atypica_study_get_podcast** - Get podcast content
-- Input: `{ token }`
-- Returns: `{ script, audioUrl, coverUrl, metadata, ... }`
+- Input: `{ token: string }`
+- Returns:
+  ```typescript
+  {
+    token: string;          // Podcast token
+    instruction: string;    // Generation instruction
+    script: string;         // Full podcast script/transcript
+    audioUrl: string;       // Signed CDN URL for audio file
+    coverUrl?: string;      // Signed CDN URL for cover image
+    metadata: {             // Podcast metadata
+      title: string;
+      duration?: number;    // Duration in seconds
+      coverObjectUrl?: string;
+      // ... other metadata fields
+    };
+    shareUrl: string;       // Public share URL: https://atypica.ai/artifacts/podcast/{token}/share
+    generatedAt: string;    // ISO timestamp when generated
+    createdAt: string;      // ISO timestamp when created
+    updatedAt: string;      // ISO timestamp when last updated
+  }
+  ```
 
 ### Personas
 
 **atypica_persona_search** - Semantic search for AI personas
-- Input: `{ query?, tier?, limit? }`
+- Input:
+  ```typescript
+  {
+    query?: string;    // Search query (uses embedding similarity if provided)
+    tier?: number;     // Filter by tier (0-3)
+    limit?: number;    // Max results (default: 10, max: 50)
+  }
+  ```
 - Uses embedding similarity for semantic matching
-- Returns: `{ data: [{ personaId, token, name, source, tier, tags }] }`
+- Returns:
+  ```typescript
+  {
+    data: Array<{
+      personaId: number;
+      token: string;       // Persona token
+      name: string;        // Persona name
+      source: string;      // Persona source/origin
+      tier: number;        // Access tier (0-3)
+      tags: string[];      // Associated tags
+      createdAt: string;   // ISO timestamp
+    }>;
+  }
+  ```
 
 **atypica_persona_get** - Get persona details
-- Input: `{ personaId }`
-- Returns: Full persona including `prompt` field
+- Input: `{ personaId: number }`
+- Returns:
+  ```typescript
+  {
+    personaId: number;
+    token: string;       // Persona token
+    name: string;        // Persona name
+    source: string;      // Persona source/origin
+    prompt: string;      // Full persona prompt (system prompt for AI)
+    tier: number;        // Access tier (0-3)
+    tags: string[];      // Associated tags
+    locale: string;      // Persona language locale
+    createdAt: string;   // ISO timestamp
+    updatedAt: string;   // ISO timestamp
+  }
+  ```
 
 ## Understanding Research State from Messages
 
@@ -252,6 +380,21 @@ if (reportTool?.output?.reportToken) {
   const report = await callTool("atypica_study_get_report", {
     token: reportTool.output.reportToken
   });
+  console.log(report.structuredContent.title);
+  console.log(report.structuredContent.shareUrl);  // https://atypica.ai/artifacts/report/{token}/share
+}
+
+// Similarly for podcasts
+const podcastTool = messages
+  .flatMap(m => m.parts)
+  .find(p => p.type === "tool-generatePodcast" && p.state === "output-available");
+
+if (podcastTool?.output?.podcastToken) {
+  const podcast = await callTool("atypica_study_get_podcast", {
+    token: podcastTool.output.podcastToken
+  });
+  console.log(podcast.structuredContent.audioUrl);
+  console.log(podcast.structuredContent.shareUrl);  // https://atypica.ai/artifacts/podcast/{token}/share
 }
 ```
 
