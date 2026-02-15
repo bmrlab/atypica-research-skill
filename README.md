@@ -15,14 +15,14 @@ AI-powered business research capabilities through MCP protocol. Enables multi-ag
 ### Required
 
 - **atypica.ai account** - Sign up at https://atypica.ai
-- **API Key** - Get from https://atypica.ai/account/settings (format: `atypica_xxx`)
+- **API Key** - Get from https://atypica.ai/account/api-keys (format: `atypica_xxx`)
 - **MCP-compatible AI assistant** OR **bash/curl** for direct API access
 
 ### Usage & Billing
 
 - Research operations consume atypica.ai token credits
 - Token usage tracked per user account
-- Check usage at https://atypica.ai/account/usage
+- Check usage at https://atypica.ai/account/tokens
 
 ## Installation
 

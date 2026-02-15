@@ -17,7 +17,7 @@ If tools starting with `atypica_` are already available, the MCP server is confi
 
 **Configuration parameters**:
 - **Endpoint**: `https://atypica.ai/mcp/study`
-- **API Key**: From https://atypica.ai/account/settings (format: `atypica_xxx`)
+- **API Key**: From https://atypica.ai/account/api-keys (format: `atypica_xxx`)
 - **Authentication**: HTTP header `Authorization: Bearer <api_key>`
 
 **Example: Claude Desktop** - Edit config file at:
