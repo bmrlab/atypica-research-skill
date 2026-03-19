@@ -79,7 +79,7 @@ Examples:
 
 Available Tools:
   atypica_study_create           - Create research session
-  atypica_study_send_message     - Send message and execute AI
+  atypica_study_send_message     - Send message and start study execution
   atypica_study_get_messages     - Get conversation history
   atypica_study_list             - List historical sessions
   atypica_study_get_report       - Get research report

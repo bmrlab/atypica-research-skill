@@ -82,7 +82,7 @@ const result = await callTool("atypica_study_create", {
 });
 const userChatToken = result.structuredContent.token;
 
-// 2. Send message (triggers AI - may take 10-120s)
+// 2. Send message (starts the AI run; completion usually takes 10-120s in background)
 await callTool("atypica_study_send_message", {
   userChatToken,
   message: {
@@ -164,7 +164,7 @@ if (reportTool?.output?.reportToken) {
   }
   ```
 
-**atypica_study_send_message** - Send message and execute AI (10-120s)
+**atypica_study_send_message** - Send message and start/continue AI execution
 - Two input types:
   - User text: `{ userChatToken, message: { role: "user", lastPart: { type: "text", text } } }`
   - Tool result: See "User Interactions" section
@@ -173,12 +173,15 @@ if (reportTool?.output?.reportToken) {
   {
     messageId: string;           // Message identifier
     role: "user" | "assistant";  // Message role
-    status: "completed" | "saved_no_ai" | "ai_failed";
+    status: "running" | "saved_no_ai" | "ai_failed";
     attachmentCount?: number;    // Number of attachments (if any)
     error?: string;              // Error message (if status is "ai_failed")
     reason?: string;             // Reason (if status is "saved_no_ai")
   }
   ```
+- Notes:
+  - `running` means the message was saved and the study agent started/resumed in background
+  - Poll `atypica_study_get_messages` until `isRunning` becomes `false`
 
 **atypica_study_get_messages** - Retrieve conversation history and execution status
 - Input: `{ userChatToken: string, tail?: number }`
@@ -281,12 +284,13 @@ if (reportTool?.output?.reportToken) {
 - Input:
   ```typescript
   {
-    query?: string;    // Search query (uses embedding similarity if provided)
-    tier?: number;     // Filter by tier (0-3)
+    query?: string;        // Text query for name/source matching
+    privateOnly?: boolean; // true = only your own private personas
     limit?: number;    // Max results (default: 10, max: 50)
   }
   ```
-- Uses embedding similarity for semantic matching
+- With `query`, uses indexed text search
+- Without `query`, returns the latest personas visible to you (public + your private, unless `privateOnly` is true)
 - Returns:
   ```typescript
   {
@@ -517,11 +521,11 @@ Two tools require user interaction. Check `getMessages` response for pending cal
 
 ## Best Practices
 
-1. **Async execution**: Call `sendMessage` asynchronously (10-120s duration)
+1. **Async execution**: `sendMessage` starts or resumes the run, then returns while the AI continues in background
 2. **Poll for interactions**: After each `sendMessage`, check `getMessages` for pending tool calls
-3. **Handle timeouts**: If `sendMessage` times out, use `getStatus` to check progress
-4. **Error handling**: Check `status` field: `"completed" | "saved_no_ai" | "ai_failed"`
-5. **Semantic search**: Use natural language queries in `persona_search` (embedding-based)
+3. **Handle timeouts**: If `sendMessage` times out, use `getMessages` to check progress
+4. **Error handling**: Check `status` field: `"running" | "saved_no_ai" | "ai_failed"`
+5. **Persona search**: Use natural language queries in `persona_search`, or `privateOnly: true` to limit results to your own personas
 
 ## Research Types (kind)
 
@@ -533,7 +537,7 @@ Two tools require user interaction. Check `getMessages` response for pending cal
 - `planning` - Strategic planning
 - `misc` - Miscellaneous research
 
-Omit `kind` in `create` to enter **Plan Mode** where AI auto-determines research type.
+New study sessions start in **Plan Mode** automatically, where AI can clarify the request before locking in a research type.
 
 ## Performance Expectations
 
