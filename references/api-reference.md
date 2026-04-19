@@ -1,6 +1,6 @@
 # atypica Research API Reference
 
-Complete reference for all 8 MCP tools provided by atypica.ai research framework.
+Complete reference for all 9 MCP tools provided by atypica.ai research framework.
 
 ## Table of Contents
 
@@ -12,6 +12,7 @@ Complete reference for all 8 MCP tools provided by atypica.ai research framework
   - [atypica_study_list](#atypica_study_list)
   - [atypica_study_get_report](#atypica_study_get_report)
   - [atypica_study_get_podcast](#atypica_study_get_podcast)
+  - [atypica_panel_search](#atypica_panel_search)
   - [atypica_persona_search](#atypica_persona_search)
   - [atypica_persona_get](#atypica_persona_get)
 - [Complete Workflow Examples](#complete-workflow-examples)
@@ -215,7 +216,6 @@ List user's historical study sessions.
 **Input Schema**:
 ```typescript
 {
-  kind?: "productRnD" | "fastInsight" | "insights" | "testing" | "creation" | "planning" | "misc",
   page?: number,      // Default 1
   pageSize?: number   // Default 20
 }
@@ -230,7 +230,6 @@ List user's historical study sessions.
       studyId: number,
       token: string,
       title: string,
-      kind: string,
       topic: string,
       hasReport: boolean,
       hasPodcast: boolean,
@@ -316,6 +315,52 @@ Retrieve generated podcast content.
     updatedAt: string
   }
 }
+```
+
+---
+
+### atypica_panel_search
+
+Search the user's persona panels. Each panel is a curated group of AI personas that can be used as the research subject pool for a study.
+
+**Input Schema**:
+```typescript
+{
+  query?: string,      // Optional: filter panels by title (case-insensitive). Without a query, returns all panels.
+  page?: number,       // Default 1
+  pageSize?: number    // Default 20, max 50
+}
+```
+
+**Output Schema**:
+```typescript
+{
+  content: [{ type: "text", text: string }],
+  structuredContent: {
+    data: Array<{
+      panelId: number,
+      title: string,
+      personaCount: number,
+      createdAt: string,  // ISO 8601
+      updatedAt: string
+    }>,
+    pagination: {
+      page: number,
+      pageSize: number,
+      totalCount: number,
+      totalPages: number
+    }
+  }
+}
+```
+
+**Example**:
+```json
+// List all panels
+{}
+
+// Search by title
+{ "query": "coffee" }
 ```
 
 ---

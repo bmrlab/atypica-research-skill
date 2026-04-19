@@ -206,7 +206,6 @@ if (reportTool?.output?.reportToken) {
 - Input:
   ```typescript
   {
-    kind?: "testing" | "insights" | "creation" | "planning" | "misc" | "productRnD" | "fastInsight";
     page?: number;      // Default: 1
     pageSize?: number;  // Default: 20, max: 100
   }
@@ -218,7 +217,6 @@ if (reportTool?.output?.reportToken) {
       studyId: number;
       token: string;           // Study session token
       title: string;           // Auto-generated title
-      kind: string | null;     // Research type
       topic: string;           // Research topic
       hasReport: boolean;      // Has generated report
       hasPodcast: boolean;     // Has generated podcast
@@ -275,6 +273,38 @@ if (reportTool?.output?.reportToken) {
     generatedAt: string;    // ISO timestamp when generated
     createdAt: string;      // ISO timestamp when created
     updatedAt: string;      // ISO timestamp when last updated
+  }
+  ```
+
+### Panels
+
+**atypica_panel_search** - Search persona panels
+- Input:
+  ```typescript
+  {
+    query?: string;      // Optional: filter by title (case-insensitive). Without a query, returns all panels.
+    page?: number;       // Default: 1
+    pageSize?: number;   // Default: 20, max: 50
+  }
+  ```
+- Each panel is a curated group of AI personas used as the research subject pool
+- Without `query`, returns all panels
+- Returns:
+  ```typescript
+  {
+    data: Array<{
+      panelId: number;
+      title: string;
+      personaCount: number;
+      createdAt: string;   // ISO timestamp
+      updatedAt: string;   // ISO timestamp
+    }>;
+    pagination: {
+      page: number;
+      pageSize: number;
+      totalCount: number;
+      totalPages: number;
+    };
   }
   ```
 
@@ -489,10 +519,6 @@ Two tools require user interaction. Check `getMessages` response for pending cal
   "state": "input-available",
   "toolCallId": "call_xyz",
   "input": {
-    "locale": "zh-CN",
-    "kind": "insights",
-    "role": "Market Researcher",
-    "topic": "Coffee preferences study",
     "planContent": "# Research Plan\n\n## Goals\n...\n## Methods\n..."
   }
 }
@@ -527,17 +553,14 @@ Two tools require user interaction. Check `getMessages` response for pending cal
 4. **Error handling**: Check `status` field: `"running" | "saved_no_ai" | "ai_failed"`
 5. **Persona search**: Use natural language queries in `persona_search`, or `privateOnly: true` to limit results to your own personas
 
-## Research Types (kind)
+## Study Types
 
-- `productRnD` - Product research & development
-- `fastInsight` - Quick insights with podcast generation
-- `insights` - Consumer insights research
-- `testing` - Product testing and validation
-- `creation` - Creative content generation
-- `planning` - Strategic planning
-- `misc` - Miscellaneous research
+- `userResearch` - User research with personas, interviews, discussions, and reports
+- `fastInsight` - Quick insights with deep research and podcast generation
+- `productRnD` - Product research & development with audience calls and social trends
+- `panelOnly` - Build a persona panel without running a full study
 
-New study sessions start in **Plan Mode** automatically, where AI can clarify the request before locking in a research type.
+New study sessions start in **Planning** phase automatically, where AI clarifies the research intent via `requestInteraction` before creating a plan with `makeStudyPlan`.
 
 ## Performance Expectations
 
